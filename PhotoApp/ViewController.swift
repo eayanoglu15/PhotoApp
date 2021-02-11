@@ -7,11 +7,10 @@
 //
 
 import UIKit
+import Kingfisher
 
 class ViewController: UIViewController {
     @IBOutlet weak var tableView: UITableView!
-    
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,8 +18,7 @@ class ViewController: UIViewController {
         tableView.dataSource = self
         tableView.delegate = self
     }
-    
-    
+
 }
 
 extension ViewController: UITableViewDataSource {
@@ -34,6 +32,9 @@ extension ViewController: UITableViewDataSource {
         }
         let photoInfo = Photos[indexPath.row]
         if let photoUrl = photoInfo["url"], let url = URL(string: photoUrl) {
+            cell.cellImageView.kf.indicatorType = .activity
+            cell.cellImageView.kf.setImage(with: url)
+            /*
             DispatchQueue.global().async {
                 if let data = try? Data(contentsOf: url) {
                     DispatchQueue.main.async {
@@ -41,6 +42,7 @@ extension ViewController: UITableViewDataSource {
                     }
                 }
             }
+ */
         }
         return cell
     }
