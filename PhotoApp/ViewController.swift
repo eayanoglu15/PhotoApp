@@ -9,14 +9,27 @@
 import UIKit
 import Kingfisher
 
+extension ViewController: DataSourceDelegate {
+    func reloadTableView () {
+        tableView.reloadData()
+    }
+}
+
 class ViewController: UIViewController {
     @IBOutlet weak var tableView: UITableView!
+    let dataSource = DataSource()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         tableView.dataSource = self
         tableView.delegate = self
+        
+        dataSource.delegate = self
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        dataSource.loadImages()
     }
 
 }
@@ -30,6 +43,12 @@ extension ViewController: UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "ImageTableViewCell") as? ImageTableViewCell else {
             return UITableViewCell()
         }
+        
+        if let url = dataSource.getImageUrl(forIndex: indexPath.row) {
+            cell.cellImageView.kf.setImage(with: url)
+        }
+        
+        /*
         let photoInfo = Photos[indexPath.row]
         if let photoUrl = photoInfo["url"], let url = URL(string: photoUrl) {
             cell.cellImageView.kf.indicatorType = .activity
@@ -44,6 +63,7 @@ extension ViewController: UITableViewDataSource {
             }
  */
         }
+ */
         return cell
     }
     

@@ -73,20 +73,13 @@ class SessionDelegate: NSObject {
             // No other callbacks waiting, we can clear the task now.
             if !task.containsCallbacks {
                 let dataTask = task.task
-
-                self.cancelTask(dataTask)
-                self.remove(task)
+                dataTask.cancel()
+                self.remove(dataTask)
             }
         }
         let token = task.addCallback(callback)
         tasks[url] = task
         return DownloadTask(sessionTask: task, cancelToken: token)
-    }
-
-    private func cancelTask(_ dataTask: URLSessionDataTask) {
-        lock.lock()
-        defer { lock.unlock() }
-        dataTask.cancel()
     }
 
     func append(
@@ -98,23 +91,23 @@ class SessionDelegate: NSObject {
         return DownloadTask(sessionTask: task, cancelToken: token)
     }
 
-    private func remove(_ task: SessionDataTask) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        guard let url = task.originalURL else {
+    private func remove(_ task: URLSessionTask) {
+        guard let url = task.originalRequest?.url else {
             return
         }
+        lock.lock()
+        defer {lock.unlock()}
         tasks[url] = nil
     }
 
     private func task(for task: URLSessionTask) -> SessionDataTask? {
-        lock.lock()
-        defer { lock.unlock() }
 
         guard let url = task.originalRequest?.url else {
             return nil
         }
+
+        lock.lock()
+        defer { lock.unlock() }
         guard let sessionTask = tasks[url] else {
             return nil
         }
@@ -189,7 +182,7 @@ extension SessionDelegate: URLSessionDataDelegate {
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         guard let sessionTask = self.task(for: task) else { return }
 
-        if let url = sessionTask.originalURL {
+        if let url = task.originalRequest?.url {
             let result: Result<URLResponse, KingfisherError>
             if let error = error {
                 result = .failure(KingfisherError.responseError(reason: .URLSessionError(error: error)))
@@ -256,7 +249,7 @@ extension SessionDelegate: URLSessionDataDelegate {
         guard let sessionTask = self.task(for: task) else {
             return
         }
-        remove(sessionTask)
+        remove(task)
         sessionTask.onTaskDone.call((result, sessionTask.callbacks))
     }
 }
